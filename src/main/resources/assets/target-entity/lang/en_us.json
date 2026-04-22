@@ -7,10 +7,13 @@
   "target-entity.config.glow_duration": "Glow Duration",
   "target-entity.config.glow_duration.infinite": "Infinite",
 
-  "target-entity.config.category.entities": "Entity Toggles",
-  "target-entity.config.glow_drops": "Glow Drops",
-  "target-entity.config.glow_players": "Glow Players",
-  "target-entity.config.glow_mobs": "Glow Mobs",
+  "target-entity.config.category.entities": "Entity Effects",
+  "target-entity.config.drop_mode": "Drops Effect",
+  "target-entity.config.player_mode": "Players Effect",
+  "target-entity.config.mob_mode": "Mobs Effect",
+  "target-entity.config.mode.ring": "Ring",
+  "target-entity.config.mode.glow": "Glow",
+  "target-entity.config.mode.off": "Off",
 
   "target-entity.config.category.colors": "Colors",
   "target-entity.config.auto_color_drops": "Auto-Color Drops",

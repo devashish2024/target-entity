@@ -38,9 +38,17 @@ public class ModConfig {
 
     // ── Global toggles ───────────────────────────────────────────────────────
     public boolean glowEnabled = true;
-    public boolean glowDrops = true;
-    public boolean glowPlayers = true;
-    public boolean glowMobs = true;
+
+    /**
+     * Per-entity-type effect mode.
+     * RING  = custom coloured halo ring (current behaviour).
+     * GLOW  = vanilla spectral-arrow white outline, client-side only. Not
+     *          available for item drops (no visual difference).
+     * OFF   = disabled.
+     */
+    public EntityMode dropMode   = EntityMode.RING;
+    public EntityMode playerMode = EntityMode.RING;
+    public EntityMode mobMode    = EntityMode.RING;
 
     /**
      * 0 = infinite. 1–300 = seconds.
@@ -124,34 +132,31 @@ public class ModConfig {
 
     // ── Query helpers ─────────────────────────────────────────────────────────
 
+    /** Returns the configured {@link EntityMode} for a given entity kind. */
+    public EntityMode modeFor(EntityKind kind) {
+        return switch (kind) {
+            case DROP   -> dropMode;
+            case PLAYER -> playerMode;
+            case MOB    -> mobMode;
+        };
+    }
+
     /**
-     * Whether this entity should be rendered with a glow ring.
-     *
-     * @param kind        entity class
-     * @param registryKey entity-type key (mobs/players) OR item registry key
-     *                    (drops)
+     * Whether this entity should have ANY effect active (ring OR glow).
      */
     public boolean shouldGlow(EntityKind kind, String registryKey) {
         if (!glowEnabled)
             return false;
-
-        boolean subToggle = switch (kind) {
-            case DROP -> glowDrops;
-            case PLAYER -> glowPlayers;
-            case MOB -> glowMobs;
-        };
-        if (!subToggle)
+        if (modeFor(kind) == EntityMode.OFF)
             return false;
 
         if (filterMode == FilterMode.OFF)
             return true;
 
-        // For drops we filter on the contained item's registry key.
-        // For mobs/players we filter on the entity-type key.
         Set<String> list = (kind == EntityKind.DROP) ? itemFilterList : mobFilterList;
         return switch (filterMode) {
             case BLACKLIST -> !list.contains(registryKey);
-            case WHITELIST -> list.contains(registryKey);
+            case WHITELIST ->  list.contains(registryKey);
             case OFF -> true;
         };
     }
@@ -265,5 +270,17 @@ public class ModConfig {
     // ── EntityKind ────────────────────────────────────────────────────────────
     public enum EntityKind {
         DROP, PLAYER, MOB
+    }
+
+    // ── EntityMode ────────────────────────────────────────────────────────────
+    /**
+     * RING – coloured halo ring drawn by GlowRenderer (custom renderer).
+     * GLOW – vanilla spectral-arrow white outline via isCurrentlyGlowing() override.
+     * OFF  – no effect.
+     *
+     * Note: GLOW is not supported for item drops; they are capped to RING/OFF.
+     */
+    public enum EntityMode {
+        RING, GLOW, OFF
     }
 }

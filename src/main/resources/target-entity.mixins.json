@@ -2,7 +2,7 @@
   "required": true,
   "package": "vortex.targetentity.mixin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["MixinLevelRenderer", "MixinMultiPlayerGameMode"],
+  "client": ["MixinEntity", "MixinLevelRenderer", "MixinMultiPlayerGameMode"],
   "injectors": {
     "defaultRequire": 1
   }

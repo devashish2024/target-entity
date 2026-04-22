@@ -7,6 +7,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import vortex.targetentity.ModConfig.EntityMode;
 import vortex.targetentity.ModConfig.FilterMode;
 
 /**
@@ -55,26 +56,37 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.glowDurationSeconds = v)
                 .build());
 
-        // ---- Entity toggles ------------------------------------------------
+        // ---- Entity modes ------------------------------------------------
+        // Drops: RING or OFF only (vanilla glow outline has no effect on item entities)
+        // Players / Mobs: RING, GLOW (vanilla outline), or OFF
         ConfigCategory entities = builder.getOrCreateCategory(
                 Component.translatable("target-entity.config.category.entities"));
 
-        entities.addEntry(eb.startBooleanToggle(
-                Component.translatable("target-entity.config.glow_drops"), cfg.glowDrops)
-                .setDefaultValue(true)
-                .setSaveConsumer(v -> cfg.glowDrops = v)
+        entities.addEntry(eb.startEnumSelector(
+                Component.translatable("target-entity.config.drop_mode"),
+                EntityMode.class, cfg.dropMode)
+                .setDefaultValue(EntityMode.RING)
+                .setEnumNameProvider(m -> Component.translatable(
+                        "target-entity.config.mode." + m.name().toLowerCase()))
+                .setSaveConsumer(v -> cfg.dropMode = (v == EntityMode.GLOW ? EntityMode.RING : v))
                 .build());
 
-        entities.addEntry(eb.startBooleanToggle(
-                Component.translatable("target-entity.config.glow_players"), cfg.glowPlayers)
-                .setDefaultValue(true)
-                .setSaveConsumer(v -> cfg.glowPlayers = v)
+        entities.addEntry(eb.startEnumSelector(
+                Component.translatable("target-entity.config.player_mode"),
+                EntityMode.class, cfg.playerMode)
+                .setDefaultValue(EntityMode.RING)
+                .setEnumNameProvider(m -> Component.translatable(
+                        "target-entity.config.mode." + m.name().toLowerCase()))
+                .setSaveConsumer(v -> cfg.playerMode = v)
                 .build());
 
-        entities.addEntry(eb.startBooleanToggle(
-                Component.translatable("target-entity.config.glow_mobs"), cfg.glowMobs)
-                .setDefaultValue(true)
-                .setSaveConsumer(v -> cfg.glowMobs = v)
+        entities.addEntry(eb.startEnumSelector(
+                Component.translatable("target-entity.config.mob_mode"),
+                EntityMode.class, cfg.mobMode)
+                .setDefaultValue(EntityMode.RING)
+                .setEnumNameProvider(m -> Component.translatable(
+                        "target-entity.config.mode." + m.name().toLowerCase()))
+                .setSaveConsumer(v -> cfg.mobMode = v)
                 .build());
 
         // ---- Colours -------------------------------------------------------

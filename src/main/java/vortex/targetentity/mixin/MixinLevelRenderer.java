@@ -24,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import vortex.targetentity.ModConfig;
 import vortex.targetentity.ModConfig.EntityKind;
+import vortex.targetentity.ModConfig.EntityMode;
 import vortex.targetentity.glow.GlowTracker;
 import vortex.targetentity.render.GlowRenderer;
 
@@ -105,6 +106,11 @@ public abstract class MixinLevelRenderer {
             if (!cfg.shouldGlow(kind, registryKey))
                 continue;
             if (!GlowTracker.isActive(entity))
+                continue;
+
+            // GLOW mode uses the vanilla outline effect (handled by MixinEntity).
+            // Only draw a ring for RING mode.
+            if (cfg.modeFor(kind) != EntityMode.RING)
                 continue;
 
             // Interpolated position
