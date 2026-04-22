@@ -8,6 +8,10 @@ group = project.maven_group
 
 repositories {
 	maven {
+		name = "covers1624"
+		url = "https://nexus.covers1624.net/repository/maven-hosted/"
+	}
+	maven {
 		name = "Terraformers"
 		url = "https://maven.terraformersmc.com/"
 	}
@@ -31,6 +35,11 @@ dependencies {
 
 	// ModMenu (compile-only, optional at runtime)
 	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// DevLogin — Microsoft Account auth for runClient
+	// Run `./gradlew runClient` and follow the browser prompt once.
+	// Token is cached in ~/.devlogin/ and auto-refreshed on subsequent runs.
+	runtimeOnly "net.covers1624:DevLogin:${dev_login_version}"
 }
 
 processResources {
@@ -43,6 +52,19 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
+}
+
+// ── DevLogin: Microsoft account auth for dev runs ────────────────────────
+// DevLogin wraps the real main class, performs the Microsoft OAuth flow
+// (browser + device code), caches the token in ~/.devlogin/, then hands off
+// to the true launch target with the correct --accessToken / --uuid args.
+loom {
+	runs {
+		client {
+			property "devlogin.launch_target", "net.fabricmc.loader.impl.launch.knot.KnotClient"
+			mainClass = "net.covers1624.devlogin.DevLogin"
+		}
+	}
 }
 
 java {

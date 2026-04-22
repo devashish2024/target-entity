@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.projectile.Projectile;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector4f;
@@ -26,9 +27,19 @@ import vortex.targetentity.ModConfig.EntityKind;
 import vortex.targetentity.glow.GlowTracker;
 import vortex.targetentity.render.GlowRenderer;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 @Environment(EnvType.CLIENT)
 @Mixin(LevelRenderer.class)
 public abstract class MixinLevelRenderer {
+
+    /**
+     * Tracks the previous hurtTime for each entity so we can detect the exact
+     * frame when a hit lands (transition from lower to higher value).
+     * WeakHashMap ensures entries are GC'd when entities are unloaded.
+     */
+    private static final Map<Entity, Integer> PREV_HURT_TIMES = new WeakHashMap<>();
 
     @Inject(method = "renderLevel", at = @At("TAIL"))
     private void te$renderEntityGlows(
@@ -62,10 +73,22 @@ public abstract class MixinLevelRenderer {
             if (kind == null)
                 continue;
 
-            // Extend glow timer whenever the entity is hurt (hurtTime is set client-side
-            // via sync packet, so this works correctly in both SP and MP).
-            if (entity instanceof net.minecraft.world.entity.LivingEntity le && le.hurtTime > 0) {
-                GlowTracker.touch(entity);
+            // Detect the exact frame a hit lands: hurtTime spikes from a lower
+            // value to a higher one (always resets to max then counts down).
+            // Only trigger when the local player was the attacker:
+            //   a) Direct melee — flagged by MixinMultiPlayerGameMode.attack()
+            //   b) Player-owned projectile — a Projectile with getOwner()==mc.player
+            //      that is still in the world and within 4 blocks of this entity.
+            if (entity instanceof net.minecraft.world.entity.LivingEntity le) {
+                int prev = PREV_HURT_TIMES.getOrDefault(entity, 0);
+                if (le.hurtTime > prev) {
+                    // hurtTime just spiked — a hit registered this frame
+                    if (GlowTracker.consumeDirectAttack(entity)
+                            || hasNearbyPlayerProjectile(entity, mc)) {
+                        GlowTracker.touch(entity);
+                    }
+                }
+                PREV_HURT_TIMES.put(entity, le.hurtTime);
             }
 
             // For drops, filter on the *item* registry key (not the ItemEntity type key).
@@ -126,5 +149,24 @@ public abstract class MixinLevelRenderer {
             return EntityKind.MOB;
         }
         return null;
+    }
+
+    /**
+     * Returns true if any projectile currently in the world is owned by the
+     * local player AND is within 4 blocks of {@code target}.
+     *
+     * <p>This covers bows, crossbows, tridents, and any other ranged weapon that
+     * creates a {@link Projectile} entity. Arrows remain embedded in the entity
+     * briefly after impact, so the proximity check reliably catches the hit frame.
+     */
+    private static boolean hasNearbyPlayerProjectile(Entity target, Minecraft mc) {
+        for (Entity e : mc.level.entitiesForRendering()) {
+            if (e instanceof Projectile p
+                    && p.getOwner() == mc.player
+                    && p.distanceToSqr(target) < 16.0) { // 4 blocks squared
+                return true;
+            }
+        }
+        return false;
     }
 }

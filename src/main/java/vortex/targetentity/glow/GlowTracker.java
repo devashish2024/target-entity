@@ -18,23 +18,50 @@ import java.util.WeakHashMap;
  * <p>
  * For living entities (mobs, players):
  * <ul>
- * <li>If {@code glowDurationSeconds == 0}, infinite mode — glow always
- * active.</li>
- * <li>Otherwise, an entity glows when recently spawned (tickCount heuristic)
- * OR when explicitly "touched" via {@link #touch(Entity)} (called on
- * hurt).</li>
+ * <li>If {@code glowDurationSeconds == 0}, infinite mode — glow always active.</li>
+ * <li>Otherwise, the entity glows only after the local player explicitly deals
+ * damage to it (melee via {@code MultiPlayerGameMode.attack()} or a
+ * player-owned projectile). The glow lasts {@code glowDurationSeconds}.</li>
  * </ul>
- *
- * <p>
- * Hurt-based touch is applied in MixinLevelRenderer by checking
- * {@code entity.hurtTime > 0} before drawing — this field is set client-side
- * (via sync packet) so it works correctly in both SP and MP.
  */
 @Environment(EnvType.CLIENT)
 public final class GlowTracker {
 
     /** entity → expiry time nanos. WeakHashMap auto-cleans removed entities. */
     private static final Map<Entity, Long> EXPIRY_MAP = new WeakHashMap<>();
+
+    /**
+     * Short-lived flag: the local player just swung at / fired at this entity.
+     * TTL is generous (3 s) to cover network round-trip latency.
+     * Keyed by entity; value = nanos when the flag expires.
+     */
+    private static final Map<Entity, Long> DIRECT_ATTACK_MAP = new WeakHashMap<>();
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    /**
+     * Called by {@code MixinMultiPlayerGameMode} when the local player directly
+     * attacks an entity (melee + any attack() call).
+     */
+    public static void markDirectAttack(Entity entity) {
+        // Flag expires after 3 s — long enough to survive a laggy server round-trip.
+        DIRECT_ATTACK_MAP.put(entity, System.nanoTime() + 3_000_000_000L);
+    }
+
+    /**
+     * Returns true if {@link #markDirectAttack} was called for this entity within
+     * the last 3 seconds and hasn't been consumed yet (one-shot per hit).
+     * Consuming the flag prevents a single swing from triggering multiple rings.
+     */
+    public static boolean consumeDirectAttack(Entity entity) {
+        Long expiry = DIRECT_ATTACK_MAP.get(entity);
+        if (expiry == null || System.nanoTime() >= expiry) {
+            DIRECT_ATTACK_MAP.remove(entity);
+            return false;
+        }
+        DIRECT_ATTACK_MAP.remove(entity); // consume
+        return true;
+    }
 
     /** Reset/extend the glow timer for a living entity. */
     public static void touch(Entity entity) {
@@ -52,13 +79,9 @@ public final class GlowTracker {
 
         int dur = ModConfig.get().glowDurationSeconds;
         if (dur <= 0)
-            return true; // infinite mode
+            return true; // infinite mode — always on
 
-        // Newly-spawned: glow for first <dur> seconds via tickCount
-        if (entity.tickCount < dur * 20)
-            return true;
-
-        // Explicit timer set by touch() on hurt
+        // Timer-based: only active if touch() was called and hasn't expired
         Long expiry = EXPIRY_MAP.get(entity);
         if (expiry == null)
             return false;
