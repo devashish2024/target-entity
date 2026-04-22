@@ -1,0 +1,40 @@
+{
+  "target-entity.config.title": "Target Entity Settings",
+
+  "target-entity.config.category.general": "General",
+  "target-entity.config.glow_enabled": "Enable Glow",
+  "target-entity.config.glow_intensity": "Glow Intensity",
+  "target-entity.config.glow_duration": "Glow Duration",
+  "target-entity.config.glow_duration.infinite": "Infinite",
+
+  "target-entity.config.category.entities": "Entity Toggles",
+  "target-entity.config.glow_drops": "Glow Drops",
+  "target-entity.config.glow_players": "Glow Players",
+  "target-entity.config.glow_mobs": "Glow Mobs",
+
+  "target-entity.config.category.colors": "Colors",
+  "target-entity.config.auto_color_drops": "Auto-Color Drops",
+  "target-entity.config.auto_color_drops.tooltip": "Derive drop ring color from item name color or rarity. Ignores the Drop Color setting.",
+  "target-entity.config.color_drops": "Drop Color (fallback)",
+  "target-entity.config.color_players": "Player Color",
+  "target-entity.config.color_mobs": "Mob Color",
+
+  "target-entity.config.category.filter": "Filter / Exceptions",
+  "target-entity.config.filter_mode": "Filter Mode",
+  "target-entity.config.filter_mode.off": "Off (everything glows)",
+  "target-entity.config.filter_mode.blacklist": "Blacklist (exclude listed)",
+  "target-entity.config.filter_mode.whitelist": "Whitelist (only listed)",
+  "target-entity.config.filter_hint": "Open 'Filter Lists' via Mod Menu to manage item/mob checkboxes",
+
+  "target-entity.hub.title": "Target Entity",
+  "target-entity.hub.settings": "Settings",
+  "target-entity.hub.filters": "Filter Lists",
+
+  "target-entity.filter.title": "Target Entity - Filter Lists",
+  "target-entity.filter.tab.items": "Items",
+  "target-entity.filter.tab.mobs": "Mobs",
+  "target-entity.filter.select_all": "Select All",
+  "target-entity.filter.select_none": "Select None",
+  "target-entity.filter.search": "Search...",
+  "target-entity.filter.done": "Done"
+}
