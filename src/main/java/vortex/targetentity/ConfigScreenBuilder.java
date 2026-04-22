@@ -96,11 +96,25 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.colorDrops = 0xFF000000 | v)
                 .build());
 
+        colours.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.auto_color_players"), cfg.autoColorPlayers)
+                .setDefaultValue(true)
+                .setTooltip(Component.translatable("target-entity.config.auto_color_players.tooltip"))
+                .setSaveConsumer(v -> cfg.autoColorPlayers = v)
+                .build());
+
         colours.addEntry(eb.startColorField(
                 Component.translatable("target-entity.config.color_players"),
                 cfg.colorPlayers & 0x00FFFFFF)
                 .setDefaultValue(0x55FFFF)
                 .setSaveConsumer(v -> cfg.colorPlayers = 0xFF000000 | v)
+                .build());
+
+        colours.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.auto_color_mobs"), cfg.autoColorMobs)
+                .setDefaultValue(true)
+                .setTooltip(Component.translatable("target-entity.config.auto_color_mobs.tooltip"))
+                .setSaveConsumer(v -> cfg.autoColorMobs = v)
                 .build());
 
         colours.addEntry(eb.startColorField(
@@ -124,10 +138,27 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.filterMode = v)
                 .build());
 
-        // Text entries pointing to FilterScreen (opened via ModMenu second screen)
-        filter.addEntry(eb.startTextDescription(
-                Component.translatable("target-entity.config.filter_hint"))
-                .build());
+        // Buttons to open item / mob filter screens inline within the settings.
+        // parentCapture stores the current ClothConfig screen once it's initialized,
+        // so FilterScreen can navigate back to it on close.
+        final Screen[] parentCapture = {parent};
+        builder.setAfterInitConsumer(s -> parentCapture[0] = s);
+
+        filter.addEntry(new ButtonConfigEntry(
+                Component.translatable("target-entity.config.filter_items"),
+                () -> {
+                    ModConfig.save();
+                    net.minecraft.client.Minecraft.getInstance()
+                            .setScreen(new FilterScreen(parentCapture[0], true));
+                }));
+
+        filter.addEntry(new ButtonConfigEntry(
+                Component.translatable("target-entity.config.filter_mobs"),
+                () -> {
+                    ModConfig.save();
+                    net.minecraft.client.Minecraft.getInstance()
+                            .setScreen(new FilterScreen(parentCapture[0], false));
+                }));
 
         return builder.build();
     }

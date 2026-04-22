@@ -1,5 +1,5 @@
 {
-  "target-entity.config.title": "Target Entity Settings",
+  "target-entity.config.title": "Settings",
 
   "target-entity.config.category.general": "General",
   "target-entity.config.glow_enabled": "Enable Glow",
@@ -16,21 +16,24 @@
   "target-entity.config.auto_color_drops": "Auto-Color Drops",
   "target-entity.config.auto_color_drops.tooltip": "Derive drop ring color from item name color or rarity. Ignores the Drop Color setting.",
   "target-entity.config.color_drops": "Drop Color (fallback)",
-  "target-entity.config.color_players": "Player Color",
-  "target-entity.config.color_mobs": "Mob Color",
+
+  "target-entity.config.auto_color_players": "Auto-Color Players",
+  "target-entity.config.auto_color_players.tooltip": "Derive player ring color from their team or display name color. Falls back to Player Color when no color is found.",
+  "target-entity.config.color_players": "Player Color (fallback)",
+
+  "target-entity.config.auto_color_mobs": "Auto-Color Mobs",
+  "target-entity.config.auto_color_mobs.tooltip": "Derive mob ring color from the mob's custom nametag color. Falls back to Mob Color when no nametag color is set.",
+  "target-entity.config.color_mobs": "Mob Color (fallback)",
 
   "target-entity.config.category.filter": "Filter / Exceptions",
   "target-entity.config.filter_mode": "Filter Mode",
   "target-entity.config.filter_mode.off": "Off (everything glows)",
   "target-entity.config.filter_mode.blacklist": "Blacklist (exclude listed)",
   "target-entity.config.filter_mode.whitelist": "Whitelist (only listed)",
-  "target-entity.config.filter_hint": "Open 'Filter Lists' via Mod Menu to manage item/mob checkboxes",
+  "target-entity.config.filter_items": "Manage Item / Drop Filter ▶",
+  "target-entity.config.filter_mobs": "Manage Mob Filter ▶",
 
-  "target-entity.hub.title": "Target Entity",
-  "target-entity.hub.settings": "Settings",
-  "target-entity.hub.filters": "Filter Lists",
-
-  "target-entity.filter.title": "Target Entity - Filter Lists",
+  "target-entity.filter.title": "Manage Filter Lists",
   "target-entity.filter.tab.items": "Items",
   "target-entity.filter.tab.mobs": "Mobs",
   "target-entity.filter.select_all": "Select All",

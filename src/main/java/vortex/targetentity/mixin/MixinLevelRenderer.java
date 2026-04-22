@@ -92,10 +92,14 @@ public abstract class MixinLevelRenderer {
             // Camera-relative position
             Vec3 pos = new Vec3(lx - camPos.x, ly - camPos.y, lz - camPos.z);
 
-            // Resolve color — drops use auto-color logic
+            // Resolve color — each kind has its own auto-color logic
             final int color;
             if (kind == EntityKind.DROP && entity instanceof ItemEntity ie) {
                 color = cfg.resolveDropColor(ie, registryKey);
+            } else if (kind == EntityKind.PLAYER && entity instanceof Player p) {
+                color = cfg.resolvePlayerColor(p, registryKey);
+            } else if (entity instanceof net.minecraft.world.entity.LivingEntity le) {
+                color = cfg.resolveMobColor(le, registryKey);
             } else {
                 color = cfg.resolveColor(kind, registryKey);
             }

@@ -16,7 +16,6 @@ import org.lwjgl.glfw.GLFW;
 import vortex.targetentity.ModConfig.FilterMode;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -35,8 +34,8 @@ import java.util.Set;
 public class FilterScreen extends Screen {
 
     // ── Layout constants ──────────────────────────────────────────────────────
-    private static final int HEADER_H = 55; // area above list
-    private static final int FOOTER_H = 36; // area below list
+    private static final int HEADER_H = 62; // area above list
+    private static final int FOOTER_H = 40; // area below list
     private static final int ENTRY_H = 18;
     private static final int CB_SIZE = 10; // checkbox square size
     private static final int CB_MARGIN = 5; // checkbox left margin
@@ -65,9 +64,10 @@ public class FilterScreen extends Screen {
     private Button selectNoneBtn;
     private Button doneBtn;
 
-    public FilterScreen(Screen parent) {
+    public FilterScreen(Screen parent, boolean showItems) {
         super(Component.translatable("target-entity.filter.title"));
         this.parent = parent;
+        this.showItems = showItems;
 
         // Build sorted lists once at construction time
         this.allItems = BuiltInRegistries.ITEM.keySet().stream()
@@ -89,7 +89,7 @@ public class FilterScreen extends Screen {
         int cx = width / 2;
 
         // Search field
-        searchField = new EditBox(font, cx - 100, 28, 200, 16,
+        searchField = new EditBox(font, cx - 100, 38, 200, 16,
                 Component.translatable("target-entity.filter.search"));
         searchField.setHint(Component.translatable("target-entity.filter.search"));
         searchField.setResponder(s -> rebuildList());
@@ -102,7 +102,7 @@ public class FilterScreen extends Screen {
                     scrollOffset = 0;
                     rebuildList();
                 })
-                .bounds(cx - 102, 6, 100, 18).build();
+                .bounds(cx - 102, 16, 100, 20).build();
         addRenderableWidget(tabItemsBtn);
 
         tabMobsBtn = Button.builder(Component.translatable("target-entity.filter.tab.mobs"),
@@ -111,11 +111,11 @@ public class FilterScreen extends Screen {
                     scrollOffset = 0;
                     rebuildList();
                 })
-                .bounds(cx + 2, 6, 100, 18).build();
+                .bounds(cx + 2, 16, 100, 20).build();
         addRenderableWidget(tabMobsBtn);
 
         // Footer
-        int footerY = height - FOOTER_H + 8;
+        int footerY = height - FOOTER_H + 10;
         selectAllBtn = Button.builder(Component.translatable("target-entity.filter.select_all"),
                 btn -> setAllChecked(true))
                 .bounds(cx - 155, footerY, 100, 20).build();
@@ -185,7 +185,7 @@ public class FilterScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Title
-        context.centeredText(font, title, width / 2, 0, 0xFFFFFFFF);
+        context.centeredText(font, title, width / 2, 4, 0xFFFFFFFF);
 
         // Render registered widgets (tabs, search field, buttons)
         super.extractRenderState(context, mouseX, mouseY, delta);
@@ -197,18 +197,18 @@ public class FilterScreen extends Screen {
         // List
         renderList(context, mouseX, mouseY);
 
-        // Tab indicator
+        // Tab indicator — 2px highlight under the active tab button
         int cx = width / 2;
-        context.fill(cx - 102, 24, cx - 2, 26,
+        context.fill(cx - 102, 36, cx - 2, 38,
                 showItems ? 0xFFFFFFFF : 0xFF888888);
-        context.fill(cx + 2, 24, cx + 102, 26,
+        context.fill(cx + 2, 36, cx + 102, 38,
                 showItems ? 0xFF888888 : 0xFFFFFFFF);
 
         // "OFF mode" banner
         if (ModConfig.get().filterMode == FilterMode.OFF) {
             String msg = "§7Filter mode is OFF — enable it in Settings to allow toggling";
             context.centeredText(font, Component.literal(msg),
-                    width / 2, height - FOOTER_H - 12, 0xFFAAAAAA);
+                    width / 2, HEADER_H + 6, 0xFFAAAAAA);
         }
     }
 
@@ -228,7 +228,7 @@ public class FilterScreen extends Screen {
         for (int i = firstIdx; i <= lastIdx; i++) {
             String key = filteredList.get(i);
             int entryY = listTop + i * ENTRY_H - scrollOffset;
-            if (entryY + ENTRY_H < listTop || entryY > listBottom)
+            if (entryY + ENTRY_H <= listTop || entryY >= listBottom)
                 continue;
 
             boolean checked = filter.contains(key);
@@ -307,9 +307,12 @@ public class FilterScreen extends Screen {
         int listTop = HEADER_H;
         int listBottom = height - FOOTER_H;
         if (mouseY >= listTop && mouseY < listBottom) {
-            int maxScroll = Math.max(0, filteredList.size() * ENTRY_H - listHeight());
-            scrollOffset = Math.max(0, Math.min(maxScroll,
-                    scrollOffset - (int) (verticalAmount * ENTRY_H)));
+            int dir = (int) Math.signum(verticalAmount);
+            if (dir != 0) {
+                int maxScroll = Math.max(0, filteredList.size() * ENTRY_H - listHeight());
+                scrollOffset = Math.max(0, Math.min(maxScroll,
+                        scrollOffset - dir * ENTRY_H * 3));
+            }
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);

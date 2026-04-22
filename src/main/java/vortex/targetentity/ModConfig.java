@@ -7,9 +7,12 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.scores.Team;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -55,6 +58,18 @@ public class ModConfig {
      * {@code colorDrops}.
      */
     public boolean autoColorDrops = true;
+
+    /**
+     * When true, player ring colour is derived from the player's team/name colour.
+     * Falls back to {@code colorPlayers} when no colour can be determined.
+     */
+    public boolean autoColorPlayers = true;
+
+    /**
+     * When true, mob ring colour is derived from the mob's custom nametag colour.
+     * Falls back to {@code colorMobs} when no nametag colour is set.
+     */
+    public boolean autoColorMobs = true;
 
     // ── Default colours (ARGB 0xAARRGGBB) ───────────────────────────────────
     public int colorDrops = 0xFFFFFFFF;
@@ -143,9 +158,7 @@ public class ModConfig {
 
     /**
      * Resolves the final ARGB ring colour for a mob or player entity.
-     *
-     * @param kind        entity class
-     * @param registryKey entity-type registry key
+     * Generic fallback — prefer {@link #resolvePlayerColor} / {@link #resolveMobColor}.
      */
     public int resolveColor(EntityKind kind, String registryKey) {
         int base;
@@ -159,6 +172,52 @@ public class ModConfig {
             };
         }
         return applyIntensity(base);
+    }
+
+    /**
+     * Resolves the ring colour for a player, honouring {@link #autoColorPlayers}.
+     * Priority: custom override → team colour → display-name colour → fallback.
+     */
+    public int resolvePlayerColor(Player player, String registryKey) {
+        if (customColors.containsKey(registryKey)) {
+            return applyIntensity(customColors.get(registryKey));
+        }
+        if (autoColorPlayers) {
+            // Team colour is the standard source of player name colour in multiplayer
+            Team team = player.getTeam();
+            if (team != null) {
+                Integer teamRgb = team.getColor().getColor();
+                if (teamRgb != null) {
+                    return applyIntensity(0xFF000000 | teamRgb);
+                }
+            }
+            // Server-set display name style (e.g. coloured via scoreboards or plugins)
+            TextColor tc = player.getDisplayName().getStyle().getColor();
+            if (tc != null) {
+                return applyIntensity(0xFF000000 | tc.getValue());
+            }
+        }
+        return applyIntensity(colorPlayers);
+    }
+
+    /**
+     * Resolves the ring colour for a mob, honouring {@link #autoColorMobs}.
+     * Priority: custom override → nametag colour → fallback.
+     */
+    public int resolveMobColor(LivingEntity entity, String registryKey) {
+        if (customColors.containsKey(registryKey)) {
+            return applyIntensity(customColors.get(registryKey));
+        }
+        if (autoColorMobs) {
+            Component customName = entity.getCustomName();
+            if (customName != null) {
+                TextColor tc = customName.getStyle().getColor();
+                if (tc != null) {
+                    return applyIntensity(0xFF000000 | tc.getValue());
+                }
+            }
+        }
+        return applyIntensity(colorMobs);
     }
 
     /**
