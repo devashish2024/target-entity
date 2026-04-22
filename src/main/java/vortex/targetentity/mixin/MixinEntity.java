@@ -63,7 +63,7 @@ public abstract class MixinEntity {
 
         if (!cfg.shouldGlow(kind, registryKey))
             return;
-        if (!GlowTracker.isActive(self))
+        if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(self))
             return;
 
         cir.setReturnValue(true);

@@ -105,7 +105,8 @@ public abstract class MixinLevelRenderer {
 
             if (!cfg.shouldGlow(kind, registryKey))
                 continue;
-            if (!GlowTracker.isActive(entity))
+            // Pass if always-on, otherwise require an active hit timer
+            if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(entity))
                 continue;
 
             // GLOW mode uses the vanilla outline effect (handled by MixinEntity).

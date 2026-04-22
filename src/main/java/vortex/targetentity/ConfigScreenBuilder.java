@@ -5,8 +5,10 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import vortex.targetentity.ModConfig.DropMode;
 import vortex.targetentity.ModConfig.EntityMode;
 import vortex.targetentity.ModConfig.FilterMode;
 
@@ -57,35 +59,66 @@ public final class ConfigScreenBuilder {
                 .build());
 
         // ---- Entity modes ------------------------------------------------
-        // Drops: RING or OFF only (vanilla glow outline has no effect on item entities)
-        // Players / Mobs: RING, GLOW (vanilla outline), or OFF
+        // Drops: RING or OFF only (no vanilla glow outline for item entities).
+        // Players / Mobs: RING, GLOW (vanilla outline), or OFF.
+        // "Always Glow" bypasses hit-tracking; ignored when the mode is OFF.
         ConfigCategory entities = builder.getOrCreateCategory(
                 Component.translatable("target-entity.config.category.entities"));
 
         entities.addEntry(eb.startEnumSelector(
                 Component.translatable("target-entity.config.drop_mode"),
-                EntityMode.class, cfg.dropMode)
-                .setDefaultValue(EntityMode.RING)
-                .setEnumNameProvider(m -> Component.translatable(
-                        "target-entity.config.mode." + m.name().toLowerCase()))
-                .setSaveConsumer(v -> cfg.dropMode = (v == EntityMode.GLOW ? EntityMode.RING : v))
+                DropMode.class, cfg.dropMode)
+                .setDefaultValue(DropMode.RING)
+                .setEnumNameProvider(m -> switch ((DropMode) m) {
+                    case RING -> Component.translatable("target-entity.config.mode.ring")
+                            .withStyle(ChatFormatting.GREEN);
+                    case OFF  -> Component.translatable("target-entity.config.mode.off")
+                            .withStyle(ChatFormatting.GRAY);
+                })
+                .setSaveConsumer(v -> cfg.dropMode = v)
+                .build());
+
+        entities.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.always_glow_players"), cfg.alwaysGlowPlayers)
+                .setDefaultValue(false)
+                .setTooltip(Component.translatable("target-entity.config.always_glow_players.tooltip"))
+                .setSaveConsumer(v -> cfg.alwaysGlowPlayers = v)
                 .build());
 
         entities.addEntry(eb.startEnumSelector(
                 Component.translatable("target-entity.config.player_mode"),
                 EntityMode.class, cfg.playerMode)
                 .setDefaultValue(EntityMode.RING)
-                .setEnumNameProvider(m -> Component.translatable(
-                        "target-entity.config.mode." + m.name().toLowerCase()))
+                .setEnumNameProvider(m -> switch ((EntityMode) m) {
+                    case RING -> Component.translatable("target-entity.config.mode.ring")
+                            .withStyle(ChatFormatting.GREEN);
+                    case GLOW -> Component.translatable("target-entity.config.mode.glow")
+                            .withStyle(ChatFormatting.AQUA);
+                    case OFF  -> Component.translatable("target-entity.config.mode.off")
+                            .withStyle(ChatFormatting.GRAY);
+                })
                 .setSaveConsumer(v -> cfg.playerMode = v)
+                .build());
+
+        entities.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.always_glow_mobs"), cfg.alwaysGlowMobs)
+                .setDefaultValue(false)
+                .setTooltip(Component.translatable("target-entity.config.always_glow_mobs.tooltip"))
+                .setSaveConsumer(v -> cfg.alwaysGlowMobs = v)
                 .build());
 
         entities.addEntry(eb.startEnumSelector(
                 Component.translatable("target-entity.config.mob_mode"),
                 EntityMode.class, cfg.mobMode)
                 .setDefaultValue(EntityMode.RING)
-                .setEnumNameProvider(m -> Component.translatable(
-                        "target-entity.config.mode." + m.name().toLowerCase()))
+                .setEnumNameProvider(m -> switch ((EntityMode) m) {
+                    case RING -> Component.translatable("target-entity.config.mode.ring")
+                            .withStyle(ChatFormatting.GREEN);
+                    case GLOW -> Component.translatable("target-entity.config.mode.glow")
+                            .withStyle(ChatFormatting.AQUA);
+                    case OFF  -> Component.translatable("target-entity.config.mode.off")
+                            .withStyle(ChatFormatting.GRAY);
+                })
                 .setSaveConsumer(v -> cfg.mobMode = v)
                 .build());
 

@@ -9,7 +9,11 @@
 
   "target-entity.config.category.entities": "Entity Effects",
   "target-entity.config.drop_mode": "Drops Effect",
+  "target-entity.config.always_glow_players": "Always Glow Players",
+  "target-entity.config.always_glow_players.tooltip": "All applicable players permanently show the chosen effect. When Off, only players you hit are shown.",
   "target-entity.config.player_mode": "Players Effect",
+  "target-entity.config.always_glow_mobs": "Always Glow Mobs",
+  "target-entity.config.always_glow_mobs.tooltip": "All applicable mobs permanently show the chosen effect. When Off, only mobs you hit are shown.",
   "target-entity.config.mob_mode": "Mobs Effect",
   "target-entity.config.mode.ring": "Ring",
   "target-entity.config.mode.glow": "Glow",

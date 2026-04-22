@@ -37,7 +37,11 @@ public class ModConfig {
     }
 
     // ── Global toggles ───────────────────────────────────────────────────────
-    public boolean glowEnabled = true;
+    /** Master enable for the ring (custom halo) effect. */
+    public boolean ringEnabled = true;
+
+    /** Master enable for the glow (vanilla spectral outline) effect. */
+    public boolean glowEffectEnabled = true;
 
     /**
      * Per-entity-type effect mode.
@@ -46,18 +50,34 @@ public class ModConfig {
      *          available for item drops (no visual difference).
      * OFF   = disabled.
      */
-    public EntityMode dropMode   = EntityMode.RING;
     public EntityMode playerMode = EntityMode.RING;
     public EntityMode mobMode    = EntityMode.RING;
 
     /**
-     * 0 = infinite. 1–300 = seconds.
-     * NOTE: glow duration NEVER applies to item drops — they always glow.
+     * Drops can only be RING or OFF — vanilla glow outline has no effect on
+     * item entities, so GLOW is intentionally excluded.
      */
+    public DropMode dropMode = DropMode.RING;
+
+    /**
+     * When true, ALL applicable mobs/players (passing filter) always show the
+     * configured effect regardless of whether the local player has hit them.
+     * Has no effect when the respective mode is OFF.
+     */
+    public boolean alwaysGlowPlayers = false;
+    public boolean alwaysGlowMobs    = false;
+
+    /**
+     * 0 = infinite. 1–300 = seconds.
+     * NOTE: ring duration NEVER applies to item drops — they always show.
+     */
+    public int ringDurationSeconds = 0;
+
+    /** 0 = infinite. 1–300 = seconds for the vanilla glow outline on living entities. */
     public int glowDurationSeconds = 0;
 
-    /** 0.0–1.0 multiplied into the alpha of every ring. */
-    public float glowIntensity = 0.75f;
+    /** 0.0–1.0 multiplied into the alpha of every ring. Does not affect glow outline. */
+    public float ringIntensity = 0.75f;
 
     // ── Auto-color ───────────────────────────────────────────────────────────
     /**
@@ -135,19 +155,44 @@ public class ModConfig {
     /** Returns the configured {@link EntityMode} for a given entity kind. */
     public EntityMode modeFor(EntityKind kind) {
         return switch (kind) {
-            case DROP   -> dropMode;
+            case DROP   -> dropMode == DropMode.RING ? EntityMode.RING : EntityMode.OFF;
             case PLAYER -> playerMode;
             case MOB    -> mobMode;
         };
     }
 
     /**
+     * Whether this entity kind should always show its effect (ignores hit-tracking).
+     * True when the "always glow" toggle is on AND mode is not OFF.
+     */
+    public boolean alwaysGlows(EntityKind kind) {
+        return switch (kind) {
+            // Drops bypass hit-tracking whenever their mode is RING
+            case DROP   -> dropMode == DropMode.RING;
+            case PLAYER -> alwaysGlowPlayers && playerMode != EntityMode.OFF;
+            case MOB    -> alwaysGlowMobs    && mobMode    != EntityMode.OFF;
+        };
+    }
+
+    /**
+     * Returns the effective duration (seconds) for {@code kind}'s current mode.
+     * Ring entities use {@link #ringDurationSeconds}; glow entities use
+     * {@link #glowDurationSeconds}. 0 means infinite.
+     */
+    public int durationFor(EntityKind kind) {
+        return (modeFor(kind) == EntityMode.GLOW) ? glowDurationSeconds : ringDurationSeconds;
+    }
+
+    /**
      * Whether this entity should have ANY effect active (ring OR glow).
      */
     public boolean shouldGlow(EntityKind kind, String registryKey) {
-        if (!glowEnabled)
+        EntityMode mode = modeFor(kind);
+        if (mode == EntityMode.OFF)
             return false;
-        if (modeFor(kind) == EntityMode.OFF)
+        if (mode == EntityMode.RING && !ringEnabled)
+            return false;
+        if (mode == EntityMode.GLOW && !glowEffectEnabled)
             return false;
 
         if (filterMode == FilterMode.OFF)
@@ -263,7 +308,7 @@ public class ModConfig {
     }
 
     private int applyIntensity(int argb) {
-        int a = (int) (((argb >> 24) & 0xFF) * glowIntensity);
+        int a = (int) (((argb >> 24) & 0xFF) * ringIntensity);
         return (argb & 0x00FFFFFF) | (a << 24);
     }
 
@@ -278,9 +323,15 @@ public class ModConfig {
      * GLOW – vanilla spectral-arrow white outline via isCurrentlyGlowing() override.
      * OFF  – no effect.
      *
-     * Note: GLOW is not supported for item drops; they are capped to RING/OFF.
+     * Note: GLOW is not supported for item drops; they use DropMode instead.
      */
     public enum EntityMode {
         RING, GLOW, OFF
+    }
+
+    // ── DropMode ───────────────────────────────────────────────────────────────
+    /** Restricted mode for item drops: RING or OFF only (no vanilla glow outline). */
+    public enum DropMode {
+        RING, OFF
     }
 }
