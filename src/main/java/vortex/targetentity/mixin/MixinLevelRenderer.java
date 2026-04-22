@@ -135,7 +135,27 @@ public abstract class MixinLevelRenderer {
             }
             float bbWidth = entity.getBbWidth();
 
-            GlowRenderer.drawEntityHalo(matrices, pos, bbWidth, color);
+            // Animate ring for living entities (players, mobs) — not drops.
+            // The ring glides from feet → head → feet in a smooth loop using a
+            // cosine wave so that it eases in/out at both ends.
+            //   phase  = elapsed seconds * π  → full period = 2 s
+            //   t      = (1 − cos(phase)) / 2  → maps 0→1→0 smoothly
+            //   yOffset = (entityHeight − ringHeight) * t
+            final Vec3 drawPos;
+            if (kind != EntityKind.DROP) {
+                double entityHeight = entity.getBbHeight();
+                // ringHeight must mirror GlowRenderer.drawEntityHalo's own formula
+                double radius = bbWidth * 0.5 + 0.08;
+                double ringHeight = radius * 0.55;
+                double yMax = Math.max(0.0, entityHeight - ringHeight);
+                double phase = (System.nanoTime() / 1_000_000_000.0) * Math.PI; // period = 2 s
+                double t = (1.0 - Math.cos(phase)) / 2.0;
+                drawPos = new Vec3(pos.x, pos.y + yMax * t, pos.z);
+            } else {
+                drawPos = pos;
+            }
+
+            GlowRenderer.drawEntityHalo(matrices, drawPos, bbWidth, color);
         }
     }
 
