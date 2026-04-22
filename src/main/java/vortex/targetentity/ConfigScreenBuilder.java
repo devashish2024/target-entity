@@ -28,32 +28,53 @@ public final class ConfigScreenBuilder {
 
         ConfigEntryBuilder eb = builder.entryBuilder();
 
-        // ---- General -------------------------------------------------------
-        ConfigCategory general = builder.getOrCreateCategory(
-                Component.translatable("target-entity.config.category.general"));
+        // ---- Ring ----------------------------------------------------------
+        ConfigCategory ring = builder.getOrCreateCategory(
+                Component.translatable("target-entity.config.category.ring"));
 
-        general.addEntry(eb.startBooleanToggle(
-                Component.translatable("target-entity.config.glow_enabled"), cfg.glowEnabled)
+        ring.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.ring_enabled"), cfg.ringEnabled)
                 .setDefaultValue(true)
-                .setSaveConsumer(v -> cfg.glowEnabled = v)
+                .setSaveConsumer(v -> cfg.ringEnabled = v)
                 .build());
 
-        // Glow intensity slider: 0–100 → stored as 0.0–1.0
-        general.addEntry(eb.startIntSlider(
-                Component.translatable("target-entity.config.glow_intensity"),
-                Math.round(cfg.glowIntensity * 100), 0, 100)
+        // Ring intensity slider: 0–100 → stored as 0.0–1.0
+        ring.addEntry(eb.startIntSlider(
+                Component.translatable("target-entity.config.ring_intensity"),
+                Math.round(cfg.ringIntensity * 100), 0, 100)
                 .setDefaultValue(75)
                 .setTextGetter(v -> Component.literal(v + "%"))
-                .setSaveConsumer(v -> cfg.glowIntensity = v / 100f)
+                .setSaveConsumer(v -> cfg.ringIntensity = v / 100f)
                 .build());
 
-        // Duration slider: 0 = infinite, 1–300 = seconds
-        general.addEntry(eb.startIntSlider(
+        // Ring duration slider: 0 = infinite, 1–300 = seconds
+        ring.addEntry(eb.startIntSlider(
+                Component.translatable("target-entity.config.ring_duration"),
+                cfg.ringDurationSeconds, 0, 300)
+                .setDefaultValue(0)
+                .setTextGetter(v -> v == 0
+                        ? Component.translatable("target-entity.config.duration.infinite")
+                        : Component.literal(v + "s"))
+                .setSaveConsumer(v -> cfg.ringDurationSeconds = v)
+                .build());
+
+        // ---- Glow Effect ---------------------------------------------------
+        ConfigCategory glowEffect = builder.getOrCreateCategory(
+                Component.translatable("target-entity.config.category.glow_effect"));
+
+        glowEffect.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.glow_effect_enabled"), cfg.glowEffectEnabled)
+                .setDefaultValue(true)
+                .setSaveConsumer(v -> cfg.glowEffectEnabled = v)
+                .build());
+
+        // Glow effect duration slider: 0 = infinite, 1–300 = seconds
+        glowEffect.addEntry(eb.startIntSlider(
                 Component.translatable("target-entity.config.glow_duration"),
                 cfg.glowDurationSeconds, 0, 300)
                 .setDefaultValue(0)
                 .setTextGetter(v -> v == 0
-                        ? Component.translatable("target-entity.config.glow_duration.infinite")
+                        ? Component.translatable("target-entity.config.duration.infinite")
                         : Component.literal(v + "s"))
                 .setSaveConsumer(v -> cfg.glowDurationSeconds = v)
                 .build());
@@ -144,7 +165,9 @@ public final class ConfigScreenBuilder {
         colours.addEntry(eb.startBooleanToggle(
                 Component.translatable("target-entity.config.auto_color_players"), cfg.autoColorPlayers)
                 .setDefaultValue(true)
-                .setTooltip(Component.translatable("target-entity.config.auto_color_players.tooltip"))
+                .setTooltip(
+                        Component.translatable("target-entity.config.auto_color_players.tooltip"),
+                        Component.translatable("target-entity.config.color_players.glow_note"))
                 .setSaveConsumer(v -> cfg.autoColorPlayers = v)
                 .build());
 
@@ -152,13 +175,16 @@ public final class ConfigScreenBuilder {
                 Component.translatable("target-entity.config.color_players"),
                 cfg.colorPlayers & 0x00FFFFFF)
                 .setDefaultValue(0x55FFFF)
+                .setTooltip(Component.translatable("target-entity.config.color_players.glow_note"))
                 .setSaveConsumer(v -> cfg.colorPlayers = 0xFF000000 | v)
                 .build());
 
         colours.addEntry(eb.startBooleanToggle(
                 Component.translatable("target-entity.config.auto_color_mobs"), cfg.autoColorMobs)
                 .setDefaultValue(true)
-                .setTooltip(Component.translatable("target-entity.config.auto_color_mobs.tooltip"))
+                .setTooltip(
+                        Component.translatable("target-entity.config.auto_color_mobs.tooltip"),
+                        Component.translatable("target-entity.config.color_mobs.glow_note"))
                 .setSaveConsumer(v -> cfg.autoColorMobs = v)
                 .build());
 
@@ -166,6 +192,7 @@ public final class ConfigScreenBuilder {
                 Component.translatable("target-entity.config.color_mobs"),
                 cfg.colorMobs & 0x00FFFFFF)
                 .setDefaultValue(0x55FF55)
+                .setTooltip(Component.translatable("target-entity.config.color_mobs.glow_note"))
                 .setSaveConsumer(v -> cfg.colorMobs = 0xFF000000 | v)
                 .build());
 

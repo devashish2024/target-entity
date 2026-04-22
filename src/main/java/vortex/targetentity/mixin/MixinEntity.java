@@ -37,7 +37,7 @@ public abstract class MixinEntity {
             return;
 
         ModConfig cfg = ModConfig.get();
-        if (!cfg.glowEnabled)
+        if (!cfg.glowEffectEnabled)
             return;
 
         // Classify
@@ -63,7 +63,7 @@ public abstract class MixinEntity {
 
         if (!cfg.shouldGlow(kind, registryKey))
             return;
-        if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(self))
+        if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(self, cfg.glowDurationSeconds))
             return;
 
         cir.setReturnValue(true);

@@ -59,7 +59,7 @@ public abstract class MixinLevelRenderer {
             return;
 
         ModConfig cfg = ModConfig.get();
-        if (!cfg.glowEnabled)
+        if (!cfg.ringEnabled)
             return;
 
         float tickDelta = deltaTracker.getGameTimeDeltaPartialTick(true);
@@ -86,7 +86,7 @@ public abstract class MixinLevelRenderer {
                     // hurtTime just spiked — a hit registered this frame
                     if (GlowTracker.consumeDirectAttack(entity)
                             || hasNearbyPlayerProjectile(entity, mc)) {
-                        GlowTracker.touch(entity);
+                        GlowTracker.touch(entity, cfg.durationFor(kind));
                     }
                 }
                 PREV_HURT_TIMES.put(entity, le.hurtTime);
@@ -106,7 +106,7 @@ public abstract class MixinLevelRenderer {
             if (!cfg.shouldGlow(kind, registryKey))
                 continue;
             // Pass if always-on, otherwise require an active hit timer
-            if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(entity))
+            if (!cfg.alwaysGlows(kind) && !GlowTracker.isActive(entity, cfg.durationFor(kind)))
                 continue;
 
             // GLOW mode uses the vanilla outline effect (handled by MixinEntity).

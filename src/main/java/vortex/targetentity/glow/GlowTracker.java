@@ -4,7 +4,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
-import vortex.targetentity.ModConfig;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -63,22 +62,20 @@ public final class GlowTracker {
         return true;
     }
 
-    /** Reset/extend the glow timer for a living entity. */
-    public static void touch(Entity entity) {
-        int dur = ModConfig.get().glowDurationSeconds;
-        if (dur <= 0)
+    /** Reset/extend the glow timer for a living entity using the given duration. */
+    public static void touch(Entity entity, int durationSeconds) {
+        if (durationSeconds <= 0)
             return;
-        EXPIRY_MAP.put(entity, System.nanoTime() + (long) dur * 1_000_000_000L);
+        EXPIRY_MAP.put(entity, System.nanoTime() + (long) durationSeconds * 1_000_000_000L);
     }
 
-    /** Returns true if this entity should currently show a glow ring. */
-    public static boolean isActive(Entity entity) {
-        // Item drops ALWAYS glow — duration setting never applies to them
+    /** Returns true if this entity should currently show its effect. */
+    public static boolean isActive(Entity entity, int durationSeconds) {
+        // Item drops ALWAYS show — duration setting never applies to them
         if (entity instanceof ItemEntity)
             return true;
 
-        int dur = ModConfig.get().glowDurationSeconds;
-        if (dur <= 0)
+        if (durationSeconds <= 0)
             return true; // infinite mode — always on
 
         // Timer-based: only active if touch() was called and hasn't expired

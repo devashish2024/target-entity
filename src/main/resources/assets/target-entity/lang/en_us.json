@@ -1,11 +1,15 @@
 {
   "target-entity.config.title": "Settings",
 
-  "target-entity.config.category.general": "General",
-  "target-entity.config.glow_enabled": "Enable Glow",
-  "target-entity.config.glow_intensity": "Glow Intensity",
+  "target-entity.config.category.ring": "Ring",
+  "target-entity.config.ring_enabled": "Enable Ring",
+  "target-entity.config.ring_intensity": "Ring Intensity",
+  "target-entity.config.ring_duration": "Ring Duration",
+  "target-entity.config.duration.infinite": "Infinite",
+
+  "target-entity.config.category.glow_effect": "Glow Effect",
+  "target-entity.config.glow_effect_enabled": "Enable Glow Effect",
   "target-entity.config.glow_duration": "Glow Duration",
-  "target-entity.config.glow_duration.infinite": "Infinite",
 
   "target-entity.config.category.entities": "Entity Effects",
   "target-entity.config.drop_mode": "Drops Effect",
@@ -27,18 +31,20 @@
   "target-entity.config.auto_color_players": "Auto-Color Players",
   "target-entity.config.auto_color_players.tooltip": "Derive player ring color from their team or display name color. Falls back to Player Color when no color is found.",
   "target-entity.config.color_players": "Player Color (fallback)",
+  "target-entity.config.color_players.glow_note": "Not used when Players Effect is set to Glow — the vanilla outline has no custom color.",
 
   "target-entity.config.auto_color_mobs": "Auto-Color Mobs",
   "target-entity.config.auto_color_mobs.tooltip": "Derive mob ring color from the mob's custom nametag color. Falls back to Mob Color when no nametag color is set.",
   "target-entity.config.color_mobs": "Mob Color (fallback)",
+  "target-entity.config.color_mobs.glow_note": "Not used when Mobs Effect is set to Glow — the vanilla outline has no custom color.",
 
   "target-entity.config.category.filter": "Filter / Exceptions",
   "target-entity.config.filter_mode": "Filter Mode",
   "target-entity.config.filter_mode.off": "Off (everything glows)",
   "target-entity.config.filter_mode.blacklist": "Blacklist (exclude listed)",
   "target-entity.config.filter_mode.whitelist": "Whitelist (only listed)",
-  "target-entity.config.filter_items": "Manage Item / Drop Filter ▶",
-  "target-entity.config.filter_mobs": "Manage Mob Filter ▶",
+  "target-entity.config.filter_items": "Manage Item / Drop Filter \u25b6",
+  "target-entity.config.filter_mobs": "Manage Mob Filter \u25b6",
 
   "target-entity.filter.title": "Manage Filter Lists",
   "target-entity.filter.tab.items": "Items",
@@ -46,5 +52,8 @@
   "target-entity.filter.select_all": "Select All",
   "target-entity.filter.select_none": "Select None",
   "target-entity.filter.search": "Search...",
-  "target-entity.filter.done": "Done"
+  "target-entity.filter.done": "Done",
+
+  "key.target-entity.open_settings": "Open Settings",
+  "key.category.target-entity.target_entity": "Target Entity"
 }
