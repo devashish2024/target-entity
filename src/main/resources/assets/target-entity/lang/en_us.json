@@ -34,7 +34,7 @@
   "target-entity.config.color_players.glow_note": "Not used when Players Effect is set to Glow — the vanilla outline has no custom color.",
 
   "target-entity.config.auto_color_mobs": "Auto-Color Mobs",
-  "target-entity.config.auto_color_mobs.tooltip": "Derive mob ring color from the mob's custom nametag color. Falls back to Mob Color when no nametag color is set.",
+  "target-entity.config.auto_color_mobs.tooltip": "Derive mob ring color from the mob's custom nametag color, or a built-in per-species color palette. Falls back to Mob Color when neither applies.",
   "target-entity.config.color_mobs": "Mob Color (fallback)",
   "target-entity.config.color_mobs.glow_note": "Not used when Mobs Effect is set to Glow — the vanilla outline has no custom color.",
 

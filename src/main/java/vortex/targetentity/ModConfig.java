@@ -252,7 +252,7 @@ public class ModConfig {
 
     /**
      * Resolves the ring colour for a mob, honouring {@link #autoColorMobs}.
-     * Priority: custom override → nametag colour → fallback.
+     * Priority: custom override → nametag colour → built-in species colour → fallback.
      */
     public int resolveMobColor(LivingEntity entity, String registryKey) {
         if (customColors.containsKey(registryKey)) {
@@ -266,8 +266,111 @@ public class ModConfig {
                     return applyIntensity(0xFF000000 | tc.getValue());
                 }
             }
+            // Built-in per-species colour — gives each mob type a distinctive hue
+            Integer builtin = BUILTIN_MOB_COLORS.get(registryKey);
+            if (builtin != null) {
+                return applyIntensity(builtin);
+            }
         }
         return applyIntensity(colorMobs);
+    }
+
+    // ── Built-in per-species ring colours ────────────────────────────────────
+    /**
+     * Characteristic colours for vanilla mob types.
+     * Used by {@link #resolveMobColor} when {@link #autoColorMobs} is true
+     * and the entity has no coloured custom nametag.
+     * Colours reflect each mob's dominant visual appearance.
+     */
+    private static final Map<String, Integer> BUILTIN_MOB_COLORS;
+    static {
+        Map<String, Integer> m = new HashMap<>();
+
+        // ── Undead / Hostile ─────────────────────────────────────────────────
+        m.put("minecraft:zombie",             0xFF4A7A1E); // sickly green flesh
+        m.put("minecraft:zombie_villager",    0xFF5A8020); // zombie + villager tones
+        m.put("minecraft:husk",               0xFFD4A464); // sandy / desert tan
+        m.put("minecraft:drowned",            0xFF007777); // dark underwater cyan
+        m.put("minecraft:skeleton",           0xFFCAC2AA); // pale bone white
+        m.put("minecraft:stray",              0xFF88CCFF); // icy light blue
+        m.put("minecraft:wither_skeleton",    0xFF222222); // near-black charred bone
+        m.put("minecraft:bogged",             0xFF6B8040); // mossy brown-green
+        m.put("minecraft:creeper",            0xFF44BB00); // vivid green
+        m.put("minecraft:spider",             0xFF7A1C00); // dark reddish-brown
+        m.put("minecraft:cave_spider",        0xFF1A144A); // dark indigo
+        m.put("minecraft:enderman",           0xFF7700BB); // void purple
+        m.put("minecraft:endermite",          0xFF551188); // muted purple
+        m.put("minecraft:witch",              0xFF660080); // witch purple
+        m.put("minecraft:vindicator",         0xFF556655); // dark grayish-green coat
+        m.put("minecraft:pillager",           0xFF555555); // dark grey crossbow-wielder
+        m.put("minecraft:evoker",             0xFF332233); // near-black dark robe
+        m.put("minecraft:illusioner",         0xFF334433); // dark robe
+        m.put("minecraft:ravager",            0xFF5C3020); // dark iron-brown
+        m.put("minecraft:vex",                0xFF8090B8); // ghostly steel blue
+        m.put("minecraft:blaze",              0xFFFF8800); // fiery orange
+        m.put("minecraft:magma_cube",         0xFFDD4400); // red-orange lava
+        m.put("minecraft:ghast",              0xFFDDDDDD); // pale white
+        m.put("minecraft:zombie_piglin",      0xFFE8963C); // gold + sickly pink
+        m.put("minecraft:piglin",             0xFFE87878); // pink flesh
+        m.put("minecraft:piglin_brute",       0xFFB87820); // gold-armoured
+        m.put("minecraft:hoglin",             0xFFB05040); // reddish-brown hide
+        m.put("minecraft:zoglin",             0xFF9A8080); // pale undead hoglin
+        m.put("minecraft:strider",            0xFFCC2200); // crimson-red
+        m.put("minecraft:warden",             0xFF006688); // deep sculk teal
+        m.put("minecraft:guardian",           0xFF008888); // ocean teal
+        m.put("minecraft:elder_guardian",     0xFF88BBAA); // pale teal-grey
+        m.put("minecraft:shulker",            0xFF9932CC); // purple
+        m.put("minecraft:phantom",            0xFF1A2860); // dark indigo sky
+        m.put("minecraft:silverfish",         0xFF909090); // stone grey
+        m.put("minecraft:slime",              0xFF44BF44); // bright lime green
+        m.put("minecraft:bat",                0xFF3D1800); // very dark brown
+        m.put("minecraft:creaking",           0xFF6A3420); // dark bark red-brown
+
+        // ── Neutral ───────────────────────────────────────────────────────────
+        m.put("minecraft:bee",                0xFFFFAA00); // amber yellow
+        m.put("minecraft:wolf",               0xFF888888); // grey
+        m.put("minecraft:polar_bear",         0xFFDDDDEE); // snow white
+        m.put("minecraft:panda",              0xFFDDDDDD); // white (black markings)
+        m.put("minecraft:goat",               0xFFBBBBBB); // light grey
+        m.put("minecraft:llama",              0xFFCCB880); // tan / straw-coloured
+        m.put("minecraft:trader_llama",       0xFF4466CC); // blue trader blanket
+        m.put("minecraft:iron_golem",         0xFF999999); // iron grey
+        m.put("minecraft:snow_golem",         0xFFEEEEEE); // snow white
+
+        // ── Passive ───────────────────────────────────────────────────────────
+        m.put("minecraft:villager",           0xFFC4966A); // warm beige
+        m.put("minecraft:wandering_trader",   0xFF2244AA); // blue robe
+        m.put("minecraft:cat",                0xFFFF8800); // orange tabby
+        m.put("minecraft:ocelot",             0xFFDDBB44); // golden spotted
+        m.put("minecraft:fox",                0xFFFF6600); // vivid orange
+        m.put("minecraft:axolotl",            0xFFFF96A0); // pink
+        m.put("minecraft:frog",               0xFFDDA020); // warm orange-tan
+        m.put("minecraft:tadpole",            0xFF8B6040); // muddy brown
+        m.put("minecraft:allay",              0xFF44CCFF); // sky blue
+        m.put("minecraft:sniffer",            0xFFAA3322); // brick red
+        m.put("minecraft:camel",              0xFFD4A830); // sandy yellow
+        m.put("minecraft:armadillo",          0xFFA06030); // earthy orange-brown
+        m.put("minecraft:breeze",             0xFF80DDFF); // light breezy cyan
+        m.put("minecraft:sheep",              0xFFDDDDDD); // white wool
+        m.put("minecraft:cow",                0xFF8B4513); // saddle brown
+        m.put("minecraft:mooshroom",          0xFFCC2222); // red mushroom
+        m.put("minecraft:pig",                0xFFFF99BB); // pink
+        m.put("minecraft:chicken",            0xFFFFDD44); // yellow
+        m.put("minecraft:rabbit",             0xFFCC9966); // tan
+        m.put("minecraft:horse",              0xFF8B5C2A); // bay brown
+        m.put("minecraft:donkey",             0xFF8B7040); // dull tan-brown
+        m.put("minecraft:mule",               0xFF5C3010); // dark brown
+        m.put("minecraft:parrot",             0xFFCC3311); // red (most iconic)
+        m.put("minecraft:dolphin",            0xFF5080A8); // blue-grey
+        m.put("minecraft:turtle",             0xFF44AA44); // olive green
+        m.put("minecraft:squid",              0xFF224488); // deep blue
+        m.put("minecraft:glow_squid",         0xFF00BBAA); // glowing teal
+        m.put("minecraft:cod",                0xFFAA7040); // brown-orange
+        m.put("minecraft:salmon",             0xFFDD6644); // reddish-orange
+        m.put("minecraft:tropical_fish",      0xFFFF8844); // vivid orange
+        m.put("minecraft:pufferfish",         0xFFBBCC00); // yellow-green
+
+        BUILTIN_MOB_COLORS = Map.copyOf(m);
     }
 
     /**
