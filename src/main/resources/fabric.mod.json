@@ -3,7 +3,7 @@
   "id": "target-entity",
   "version": "${version}",
   "name": "Target Entity",
-  "description": "Renders a glowing halo ring under entities (drops, players, mobs) to make them more visible.",
+  "description": "Renders a glowing halo ring, or adds a glow effect on/under entities (drops, players, mobs) to make them more visible.",
   "authors": ["Vortex"],
   "contact": {},
   "license": "MIT",
