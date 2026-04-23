@@ -79,14 +79,18 @@ public class FilterScreen extends Screen {
         // Build sorted lists once at construction time
         this.allItems = BuiltInRegistries.ITEM.keySet().stream()
                 .sorted(Comparator.comparing(Identifier::toString))
-            .peek(id -> itemDisplayNames.put(id.toString(), Component.translatable(
-                "item." + id.getNamespace() + "." + id.getPath().replace('/', '.')).getString()))
+            .peek(id -> itemDisplayNames.put(id.toString(),
+                BuiltInRegistries.ITEM.get(id)
+                    .map(ref -> Component.translatable(ref.value().getDescriptionId()).getString())
+                    .orElse(id.toString())))
                 .map(Identifier::toString)
                 .toList();
         this.allMobs = BuiltInRegistries.ENTITY_TYPE.keySet().stream()
                 .sorted(Comparator.comparing(Identifier::toString))
-            .peek(id -> mobDisplayNames.put(id.toString(), Component.translatable(
-                "entity." + id.getNamespace() + "." + id.getPath().replace('/', '.')).getString()))
+            .peek(id -> mobDisplayNames.put(id.toString(),
+                BuiltInRegistries.ENTITY_TYPE.get(id)
+                    .map(ref -> ref.value().getDescription().getString())
+                    .orElse(id.toString())))
                 .map(Identifier::toString)
                 .toList();
     }
