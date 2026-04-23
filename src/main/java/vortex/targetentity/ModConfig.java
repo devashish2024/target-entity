@@ -27,6 +27,9 @@ import java.util.Set;
 @Environment(EnvType.CLIENT)
 public class ModConfig {
 
+    /** Slider max/sentinel for "Infinite" effect duration. */
+    public static final int DURATION_INFINITE = 301;
+
     // ── Singleton ────────────────────────────────────────────────────────────
     private static ModConfig INSTANCE = new ModConfig();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -61,19 +64,19 @@ public class ModConfig {
 
     /**
      * When true, ALL applicable mobs/players (passing filter) always show the
-     * configured effect regardless of whether the local player has hit them.
+     * configured highlight effect regardless of hit-tracking.
      * Has no effect when the respective mode is OFF.
      */
     public boolean alwaysGlowPlayers = false;
     public boolean alwaysGlowMobs    = false;
 
     /**
-     * 0 = infinite. 1–300 = seconds.
+     * 0 = disabled (no hit-based activation). 1–300 = seconds. 301 = infinite.
      * NOTE: ring duration NEVER applies to item drops — they always show.
      */
     public int ringDurationSeconds = 0;
 
-    /** 0 = infinite. 1–300 = seconds for the vanilla glow outline on living entities. */
+    /** 0 = disabled. 1–300 = seconds. 301 = infinite for vanilla glow on living entities. */
     public int glowDurationSeconds = 0;
 
     /** 0.0–1.0 multiplied into the alpha of every ring. Does not affect glow outline. */
@@ -180,7 +183,12 @@ public class ModConfig {
      * {@link #glowDurationSeconds}. 0 means infinite.
      */
     public int durationFor(EntityKind kind) {
-        return (modeFor(kind) == EntityMode.GLOW) ? glowDurationSeconds : ringDurationSeconds;
+        int duration = (modeFor(kind) == EntityMode.GLOW) ? glowDurationSeconds : ringDurationSeconds;
+        if (duration < 0)
+            return 0;
+        if (duration > DURATION_INFINITE)
+            return DURATION_INFINITE;
+        return duration;
     }
 
     /**

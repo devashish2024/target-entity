@@ -47,13 +47,15 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.ringIntensity = v / 100f)
                 .build());
 
-        // Ring duration slider: 0 = infinite, 1–300 = seconds
+        // Ring duration slider: 0 = disabled, 1-300 = seconds, 301 = infinite
         ring.addEntry(eb.startIntSlider(
                 Component.translatable("target-entity.config.ring_duration"),
-                cfg.ringDurationSeconds, 0, 300)
+                cfg.ringDurationSeconds, 0, ModConfig.DURATION_INFINITE)
                 .setDefaultValue(0)
                 .setTextGetter(v -> v == 0
-                        ? Component.translatable("target-entity.config.duration.infinite")
+                        ? Component.translatable("target-entity.config.duration.disabled")
+                        : v >= ModConfig.DURATION_INFINITE
+                                ? Component.translatable("target-entity.config.duration.infinite")
                         : Component.literal(v + "s"))
                 .setSaveConsumer(v -> cfg.ringDurationSeconds = v)
                 .build());
@@ -68,13 +70,15 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.glowEffectEnabled = v)
                 .build());
 
-        // Glow effect duration slider: 0 = infinite, 1–300 = seconds
+        // Glow effect duration slider: 0 = disabled, 1-300 = seconds, 301 = infinite
         glowEffect.addEntry(eb.startIntSlider(
                 Component.translatable("target-entity.config.glow_duration"),
-                cfg.glowDurationSeconds, 0, 300)
+                cfg.glowDurationSeconds, 0, ModConfig.DURATION_INFINITE)
                 .setDefaultValue(0)
                 .setTextGetter(v -> v == 0
-                        ? Component.translatable("target-entity.config.duration.infinite")
+                        ? Component.translatable("target-entity.config.duration.disabled")
+                        : v >= ModConfig.DURATION_INFINITE
+                                ? Component.translatable("target-entity.config.duration.infinite")
                         : Component.literal(v + "s"))
                 .setSaveConsumer(v -> cfg.glowDurationSeconds = v)
                 .build());
@@ -82,7 +86,7 @@ public final class ConfigScreenBuilder {
         // ---- Entity modes ------------------------------------------------
         // Drops: RING or OFF only (no vanilla glow outline for item entities).
         // Players / Mobs: RING, GLOW (vanilla outline), or OFF.
-        // "Always Glow" bypasses hit-tracking; ignored when the mode is OFF.
+        // "Always Highlight" bypasses hit-tracking; ignored when the mode is OFF.
         ConfigCategory entities = builder.getOrCreateCategory(
                 Component.translatable("target-entity.config.category.entities"));
 

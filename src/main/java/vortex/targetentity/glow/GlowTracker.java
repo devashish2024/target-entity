@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import vortex.targetentity.ModConfig;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -17,10 +18,12 @@ import java.util.WeakHashMap;
  * <p>
  * For living entities (mobs, players):
  * <ul>
- * <li>If {@code glowDurationSeconds == 0}, infinite mode — glow always active.</li>
+ * <li>If duration is {@code 0}, hit-based activation is disabled.</li>
+ * <li>If duration is {@link ModConfig#DURATION_INFINITE}, one hit enables the
+ * effect permanently for that entity (until unload).</li>
  * <li>Otherwise, the entity glows only after the local player explicitly deals
  * damage to it (melee via {@code MultiPlayerGameMode.attack()} or a
- * player-owned projectile). The glow lasts {@code glowDurationSeconds}.</li>
+ * player-owned projectile). The effect lasts for the configured seconds.</li>
  * </ul>
  */
 @Environment(EnvType.CLIENT)
@@ -66,6 +69,10 @@ public final class GlowTracker {
     public static void touch(Entity entity, int durationSeconds) {
         if (durationSeconds <= 0)
             return;
+        if (durationSeconds >= ModConfig.DURATION_INFINITE) {
+            EXPIRY_MAP.put(entity, Long.MAX_VALUE);
+            return;
+        }
         EXPIRY_MAP.put(entity, System.nanoTime() + (long) durationSeconds * 1_000_000_000L);
     }
 
@@ -76,12 +83,14 @@ public final class GlowTracker {
             return true;
 
         if (durationSeconds <= 0)
-            return true; // infinite mode — always on
+            return false; // disabled: hit-tracking does not activate this effect
 
         // Timer-based: only active if touch() was called and hasn't expired
         Long expiry = EXPIRY_MAP.get(entity);
         if (expiry == null)
             return false;
+        if (expiry == Long.MAX_VALUE)
+            return true;
         boolean active = System.nanoTime() < expiry;
         if (!active)
             EXPIRY_MAP.remove(entity);

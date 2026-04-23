@@ -5,6 +5,7 @@
   "target-entity.config.ring_enabled": "Enable Ring",
   "target-entity.config.ring_intensity": "Ring Intensity",
   "target-entity.config.ring_duration": "Ring Duration",
+  "target-entity.config.duration.disabled": "Disabled",
   "target-entity.config.duration.infinite": "Infinite",
 
   "target-entity.config.category.glow_effect": "Glow Effect",
@@ -13,11 +14,11 @@
 
   "target-entity.config.category.entities": "Entity Effects",
   "target-entity.config.drop_mode": "Drops Effect",
-  "target-entity.config.always_glow_players": "Always Glow Players",
-  "target-entity.config.always_glow_players.tooltip": "All applicable players permanently show the chosen effect. When Off, only players you hit are shown.",
+  "target-entity.config.always_glow_players": "Always Highlight Players",
+  "target-entity.config.always_glow_players.tooltip": "When enabled, all applicable players always use Players Effect (Ring or Glow). If Players Effect is Off, this does nothing.",
   "target-entity.config.player_mode": "Players Effect",
-  "target-entity.config.always_glow_mobs": "Always Glow Mobs",
-  "target-entity.config.always_glow_mobs.tooltip": "All applicable mobs permanently show the chosen effect. When Off, only mobs you hit are shown.",
+  "target-entity.config.always_glow_mobs": "Always Highlight Mobs",
+  "target-entity.config.always_glow_mobs.tooltip": "When enabled, all applicable mobs always use Mobs Effect (Ring or Glow). If Mobs Effect is Off, this does nothing.",
   "target-entity.config.mob_mode": "Mobs Effect",
   "target-entity.config.mode.ring": "Ring",
   "target-entity.config.mode.glow": "Glow",
