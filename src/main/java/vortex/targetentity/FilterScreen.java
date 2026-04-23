@@ -16,7 +16,10 @@ import org.lwjgl.glfw.GLFW;
 import vortex.targetentity.ModConfig.FilterMode;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,6 +55,10 @@ public class FilterScreen extends Screen {
     private final List<String> allItems;
     /** All entity-types from the registry (pre-built once). */
     private final List<String> allMobs;
+    /** Localized display names for item registry keys. */
+    private final Map<String, String> itemDisplayNames = new HashMap<>();
+    /** Localized display names for mob registry keys. */
+    private final Map<String, String> mobDisplayNames = new HashMap<>();
 
     /** How many pixels the list is scrolled down. */
     private int scrollOffset = 0;
@@ -71,12 +78,14 @@ public class FilterScreen extends Screen {
 
         // Build sorted lists once at construction time
         this.allItems = BuiltInRegistries.ITEM.keySet().stream()
+                .sorted(Comparator.comparing(Identifier::toString))
+                .peek(id -> itemDisplayNames.put(id.toString(), BuiltInRegistries.ITEM.get(id).getDescription().getString()))
                 .map(Identifier::toString)
-                .sorted()
                 .toList();
         this.allMobs = BuiltInRegistries.ENTITY_TYPE.keySet().stream()
+                .sorted(Comparator.comparing(Identifier::toString))
+                .peek(id -> mobDisplayNames.put(id.toString(), BuiltInRegistries.ENTITY_TYPE.get(id).getDescription().getString()))
                 .map(Identifier::toString)
-                .sorted()
                 .toList();
     }
 
@@ -153,7 +162,8 @@ public class FilterScreen extends Screen {
         String query = searchField == null ? "" : searchField.getValue().toLowerCase();
         List<String> source = showItems ? allItems : allMobs;
         for (String key : source) {
-            if (query.isEmpty() || key.contains(query)) {
+            String displayName = displayNameForKey(key).toLowerCase();
+            if (query.isEmpty() || key.contains(query) || displayName.contains(query)) {
                 filteredList.add(key);
             }
         }
@@ -250,9 +260,9 @@ public class FilterScreen extends Screen {
                 context.fill(cbX + 2, cbY + 2, cbX + CB_SIZE - 2, cbY + CB_SIZE - 2, checkColor);
             }
 
-            // Entry key text
+            // Entry display text (localized item/entity name)
             int textColor = disabled ? 0xFF888888 : (checked ? 0xFFFFFFFF : 0xFFCCCCCC);
-            context.text(font, key, TEXT_MARGIN, entryY + (ENTRY_H - 8) / 2, textColor, false);
+            context.text(font, displayNameForKey(key), TEXT_MARGIN, entryY + (ENTRY_H - 8) / 2, textColor, false);
         }
 
         // Scroll bar (if content overflows)
@@ -333,5 +343,9 @@ public class FilterScreen extends Screen {
 
     private int listHeight() {
         return height - HEADER_H - FOOTER_H;
+    }
+
+    private String displayNameForKey(String key) {
+        return showItems ? itemDisplayNames.getOrDefault(key, key) : mobDisplayNames.getOrDefault(key, key);
     }
 }
