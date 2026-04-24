@@ -87,9 +87,9 @@ public abstract class MixinLevelRenderer {
             // Detect the exact frame a hit lands: hurtTime spikes from a lower
             // value to a higher one (always resets to max then counts down).
             // Only trigger when the local player was the attacker:
-            //   a) Direct melee — flagged by MixinMultiPlayerGameMode.attack()
-            //   b) Player-owned projectile — a Projectile with getOwner()==mc.player
-            //      that is still in the world and within 4 blocks of this entity.
+            // a) Direct melee — flagged by MixinMultiPlayerGameMode.attack()
+            // b) Player-owned projectile — a Projectile with getOwner()==mc.player
+            // that is still in the world and within 4 blocks of this entity.
             if (entity instanceof net.minecraft.world.entity.LivingEntity le) {
                 int prev = PREV_HURT_TIMES.getOrDefault(entity, 0);
                 if (le.hurtTime > prev) {
@@ -144,7 +144,8 @@ public abstract class MixinLevelRenderer {
                 if (t >= 1.0) {
                     previousRingTarget = null;
                 } else if (isEligibleSingleRingTarget(previousRingTarget, cfg, mc)) {
-                    Vec3 prevDrawPos = computeRingDrawPos(previousRingTarget, classifyEntity(previousRingTarget, mc), tickDelta,
+                    Vec3 prevDrawPos = computeRingDrawPos(previousRingTarget, classifyEntity(previousRingTarget, mc),
+                            tickDelta,
                             camPos);
                     double eased = 1.0 - Math.pow(1.0 - t, 3.0);
                     drawPos = new Vec3(
@@ -313,7 +314,8 @@ public abstract class MixinLevelRenderer {
      * Returns true if any projectile currently in the world is owned by the
      * local player AND is within 4 blocks of {@code target}.
      *
-     * <p>This covers bows, crossbows, tridents, and any other ranged weapon that
+     * <p>
+     * This covers bows, crossbows, tridents, and any other ranged weapon that
      * creates a {@link Projectile} entity. Arrows remain embedded in the entity
      * briefly after impact, so the proximity check reliably catches the hit frame.
      */
