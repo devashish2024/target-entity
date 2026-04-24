@@ -5,6 +5,8 @@
   "target-entity.config.ring_enabled": "Enable Ring",
   "target-entity.config.ring_intensity": "Ring Intensity",
   "target-entity.config.ring_duration": "Ring Duration",
+  "target-entity.config.single_target_ring": "Single Target Ring",
+  "target-entity.config.single_target_ring.tooltip": "When enabled, only one mob/player can have Ring at a time. The ring glides to the new target when switching. Drops are unaffected.",
   "target-entity.config.duration.disabled": "Disabled",
   "target-entity.config.duration.infinite": "Infinite",
 

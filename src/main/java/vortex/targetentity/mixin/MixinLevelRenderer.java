@@ -28,6 +28,8 @@ import vortex.targetentity.ModConfig.EntityMode;
 import vortex.targetentity.glow.GlowTracker;
 import vortex.targetentity.render.GlowRenderer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -41,6 +43,10 @@ public abstract class MixinLevelRenderer {
      * WeakHashMap ensures entries are GC'd when entities are unloaded.
      */
     private static final Map<Entity, Integer> PREV_HURT_TIMES = new WeakHashMap<>();
+    private static Entity activeRingTarget;
+    private static Entity previousRingTarget;
+    private static long ringTransitionStartNanos;
+    private static final long RING_TRANSITION_NANOS = 694_000_000L;
 
     @Inject(method = "renderLevel", at = @At("TAIL"))
     private void te$renderEntityGlows(
@@ -69,7 +75,10 @@ public abstract class MixinLevelRenderer {
         PoseStack matrices = new PoseStack();
         matrices.mulPose(new Matrix4f(modelViewMatrix));
 
+        List<Entity> entities = new ArrayList<>();
         for (Entity entity : mc.level.entitiesForRendering()) {
+            entities.add(entity);
+
             EntityKind kind = classifyEntity(entity, mc);
             if (kind == null)
                 continue;
@@ -87,21 +96,28 @@ public abstract class MixinLevelRenderer {
                     if (GlowTracker.consumeDirectAttack(entity)
                             || hasNearbyPlayerProjectile(entity, mc)) {
                         GlowTracker.touch(entity, cfg.durationFor(kind));
+                        if (cfg.singleTargetRing && kind != EntityKind.DROP) {
+                            setActiveSingleRingTarget(entity, cfg);
+                        }
                     }
                 }
                 PREV_HURT_TIMES.put(entity, le.hurtTime);
             }
+        }
+
+        // Keep the previous active single target if still eligible.
+        if (cfg.singleTargetRing && !isEligibleSingleRingTarget(activeRingTarget, cfg, mc)) {
+            setActiveSingleRingTarget(findFallbackSingleRingTarget(entities, cfg, mc), cfg);
+        }
+
+        for (Entity entity : entities) {
+            EntityKind kind = classifyEntity(entity, mc);
+            if (kind == null)
+                continue;
 
             // For drops, filter on the *item* registry key (not the ItemEntity type key).
             // For others, use the entity-type key.
-            final String registryKey;
-            if (kind == EntityKind.DROP && entity instanceof ItemEntity ie) {
-                registryKey = net.minecraft.core.registries.BuiltInRegistries.ITEM
-                        .getKey(ie.getItem().getItem()).toString();
-            } else {
-                registryKey = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
-                        .getKey(entity.getType()).toString();
-            }
+            final String registryKey = getRegistryKey(entity, kind);
 
             if (!cfg.shouldGlow(kind, registryKey))
                 continue;
@@ -114,13 +130,31 @@ public abstract class MixinLevelRenderer {
             if (cfg.modeFor(kind) != EntityMode.RING)
                 continue;
 
-            // Interpolated position
-            double lx = entity.xOld + (entity.getX() - entity.xOld) * tickDelta;
-            double ly = entity.yOld + (entity.getY() - entity.yOld) * tickDelta;
-            double lz = entity.zOld + (entity.getZ() - entity.zOld) * tickDelta;
+            // Single-target mode applies only to living entities. Drops always keep
+            // the current behaviour and may render simultaneously.
+            if (cfg.singleTargetRing && kind != EntityKind.DROP) {
+                if (!entity.equals(activeRingTarget))
+                    continue;
+            }
 
-            // Camera-relative position
-            Vec3 pos = new Vec3(lx - camPos.x, ly - camPos.y, lz - camPos.z);
+            Vec3 drawPos = computeRingDrawPos(entity, kind, tickDelta, camPos);
+
+            if (cfg.singleTargetRing && kind != EntityKind.DROP && previousRingTarget != null) {
+                double t = getRingTransitionProgress();
+                if (t >= 1.0) {
+                    previousRingTarget = null;
+                } else if (isEligibleSingleRingTarget(previousRingTarget, cfg, mc)) {
+                    Vec3 prevDrawPos = computeRingDrawPos(previousRingTarget, classifyEntity(previousRingTarget, mc), tickDelta,
+                            camPos);
+                    double eased = 1.0 - Math.pow(1.0 - t, 3.0);
+                    drawPos = new Vec3(
+                            prevDrawPos.x + (drawPos.x - prevDrawPos.x) * eased,
+                            prevDrawPos.y + (drawPos.y - prevDrawPos.y) * eased,
+                            prevDrawPos.z + (drawPos.z - prevDrawPos.z) * eased);
+                } else {
+                    previousRingTarget = null;
+                }
+            }
 
             // Resolve color — each kind has its own auto-color logic
             final int color;
@@ -133,30 +167,96 @@ public abstract class MixinLevelRenderer {
             } else {
                 color = cfg.resolveColor(kind, registryKey);
             }
-            float bbWidth = entity.getBbWidth();
 
-            // Animate ring for living entities (players, mobs) — not drops.
-            // The ring glides from feet → head → feet in a smooth loop using a
-            // cosine wave so that it eases in/out at both ends.
-            //   phase  = elapsed seconds * π  → full period = 2 s
-            //   t      = (1 − cos(phase)) / 2  → maps 0→1→0 smoothly
-            //   yOffset = (entityHeight − ringHeight) * t
-            final Vec3 drawPos;
-            if (kind != EntityKind.DROP) {
-                double entityHeight = entity.getBbHeight();
-                // ringHeight must mirror GlowRenderer.drawEntityHalo's own formula
-                double radius = bbWidth * 0.5 + 0.08;
-                double ringHeight = radius * 0.55;
-                double yMax = Math.max(0.0, entityHeight - ringHeight);
-                double phase = (System.nanoTime() / 1_000_000_000.0) * Math.PI; // period = 2 s
-                double t = (1.0 - Math.cos(phase)) / 2.0;
-                drawPos = new Vec3(pos.x, pos.y + yMax * t, pos.z);
-            } else {
-                drawPos = pos;
-            }
-
-            GlowRenderer.drawEntityHalo(matrices, drawPos, bbWidth, color);
+            GlowRenderer.drawEntityHalo(matrices, drawPos, entity.getBbWidth(), color);
         }
+    }
+
+    private static String getRegistryKey(Entity entity, EntityKind kind) {
+        if (kind == EntityKind.DROP && entity instanceof ItemEntity ie) {
+            return net.minecraft.core.registries.BuiltInRegistries.ITEM
+                    .getKey(ie.getItem().getItem()).toString();
+        }
+        return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                .getKey(entity.getType()).toString();
+    }
+
+    private static void setActiveSingleRingTarget(Entity entity, ModConfig cfg) {
+        if (!cfg.singleTargetRing || entity == null)
+            return;
+        if (entity.equals(activeRingTarget))
+            return;
+
+        previousRingTarget = activeRingTarget;
+        activeRingTarget = entity;
+        ringTransitionStartNanos = System.nanoTime();
+    }
+
+    private static double getRingTransitionProgress() {
+        if (ringTransitionStartNanos <= 0L)
+            return 1.0;
+        long elapsed = System.nanoTime() - ringTransitionStartNanos;
+        if (elapsed <= 0L)
+            return 0.0;
+        return Math.min(1.0, (double) elapsed / (double) RING_TRANSITION_NANOS);
+    }
+
+    private static Entity findFallbackSingleRingTarget(List<Entity> entities, ModConfig cfg, Minecraft mc) {
+        Entity best = null;
+        double bestDistSqr = Double.MAX_VALUE;
+
+        for (Entity entity : entities) {
+            if (!isEligibleSingleRingTarget(entity, cfg, mc))
+                continue;
+
+            double distSqr = entity.distanceToSqr(mc.player);
+            if (distSqr < bestDistSqr) {
+                best = entity;
+                bestDistSqr = distSqr;
+            }
+        }
+
+        return best;
+    }
+
+    private static boolean isEligibleSingleRingTarget(Entity entity, ModConfig cfg, Minecraft mc) {
+        if (entity == null || mc.level == null || mc.player == null)
+            return false;
+        if (!entity.isAlive() || entity.isRemoved())
+            return false;
+
+        EntityKind kind = classifyEntity(entity, mc);
+        if (kind == null || kind == EntityKind.DROP)
+            return false;
+
+        if (cfg.modeFor(kind) != EntityMode.RING)
+            return false;
+
+        String registryKey = getRegistryKey(entity, kind);
+        if (!cfg.shouldGlow(kind, registryKey))
+            return false;
+
+        return cfg.alwaysGlows(kind) || GlowTracker.isActive(entity, cfg.durationFor(kind));
+    }
+
+    private static Vec3 computeRingDrawPos(Entity entity, EntityKind kind, float tickDelta, Vec3 camPos) {
+        // Interpolated world position converted into camera-relative space.
+        double lx = entity.xOld + (entity.getX() - entity.xOld) * tickDelta;
+        double ly = entity.yOld + (entity.getY() - entity.yOld) * tickDelta;
+        double lz = entity.zOld + (entity.getZ() - entity.zOld) * tickDelta;
+        Vec3 pos = new Vec3(lx - camPos.x, ly - camPos.y, lz - camPos.z);
+
+        if (kind == EntityKind.DROP)
+            return pos;
+
+        // Preserve existing per-entity glide for living entities.
+        double entityHeight = entity.getBbHeight();
+        double radius = entity.getBbWidth() * 0.5 + 0.08;
+        double ringHeight = radius * 0.55;
+        double yMax = Math.max(0.0, entityHeight - ringHeight);
+        double phase = (System.nanoTime() / 1_000_000_000.0) * Math.PI;
+        double t = (1.0 - Math.cos(phase)) / 2.0;
+        return new Vec3(pos.x, pos.y + yMax * t, pos.z);
     }
 
     /**

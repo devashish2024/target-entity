@@ -82,6 +82,12 @@ public class ModConfig {
     /** 0.0–1.0 multiplied into the alpha of every ring. Does not affect glow outline. */
     public float ringIntensity = 0.75f;
 
+    /**
+     * When true, only one living target (mob/player) can have ring mode at once.
+     * Drops are never affected by this option.
+     */
+    public boolean singleTargetRing = false;
+
     // ── Auto-color ───────────────────────────────────────────────────────────
     /**
      * When true, dropped-item ring colour is derived from the item's display-name

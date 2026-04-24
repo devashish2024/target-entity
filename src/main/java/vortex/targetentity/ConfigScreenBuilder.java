@@ -60,6 +60,13 @@ public final class ConfigScreenBuilder {
                 .setSaveConsumer(v -> cfg.ringDurationSeconds = v)
                 .build());
 
+        ring.addEntry(eb.startBooleanToggle(
+                Component.translatable("target-entity.config.single_target_ring"), cfg.singleTargetRing)
+                .setDefaultValue(false)
+                .setTooltip(Component.translatable("target-entity.config.single_target_ring.tooltip"))
+                .setSaveConsumer(v -> cfg.singleTargetRing = v)
+                .build());
+
         // ---- Glow Effect ---------------------------------------------------
         ConfigCategory glowEffect = builder.getOrCreateCategory(
                 Component.translatable("target-entity.config.category.glow_effect"));
