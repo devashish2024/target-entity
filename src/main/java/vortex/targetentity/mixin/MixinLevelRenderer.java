@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -93,8 +94,7 @@ public abstract class MixinLevelRenderer {
                 int prev = PREV_HURT_TIMES.getOrDefault(entity, 0);
                 if (le.hurtTime > prev) {
                     // hurtTime just spiked — a hit registered this frame
-                    if (GlowTracker.consumeDirectAttack(entity)
-                            || hasNearbyPlayerProjectile(entity, mc)) {
+                    if (wasHitByLocalPlayer(le, mc)) {
                         GlowTracker.touch(entity, cfg.durationFor(kind));
                         if (cfg.singleTargetRing && kind != EntityKind.DROP) {
                             setActiveSingleRingTarget(entity, cfg);
@@ -170,6 +170,37 @@ public abstract class MixinLevelRenderer {
 
             GlowRenderer.drawEntityHalo(matrices, drawPos, entity.getBbWidth(), color);
         }
+    }
+
+    /**
+     * True only when this hit can be attributed to the local player.
+     * Covers:
+     * - Direct melee (flagged by MultiPlayerGameMode.attack)
+     * - Player-owned projectiles (bow, crossbow, trident, snowball, etc.)
+     *
+     * Explicitly avoids broad attacker heuristics so indirect/environmental
+     * damage attribution (e.g., TNT/anvil chains) does not incorrectly trigger.
+     */
+    private static boolean wasHitByLocalPlayer(net.minecraft.world.entity.LivingEntity target, Minecraft mc) {
+        // Direct local attack path (melee / direct attack() flow).
+        if (GlowTracker.consumeDirectAttack(target)) {
+            return true;
+        }
+
+        // Prefer authoritative per-hit damage source attribution.
+        DamageSource src = target.getLastDamageSource();
+        if (src != null) {
+            Entity direct = src.getDirectEntity();
+            if (direct == mc.player) {
+                return true;
+            }
+            if (direct instanceof Projectile p && p.getOwner() == mc.player) {
+                return true;
+            }
+        }
+
+        // Fallback for edge cases where source metadata is unavailable client-side.
+        return hasNearbyPlayerProjectile(target, mc);
     }
 
     private static String getRegistryKey(Entity entity, EntityKind kind) {
